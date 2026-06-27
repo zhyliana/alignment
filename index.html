@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: #0a0a0f; color: #e0e0e0; font-family: -apple-system, sans-serif; padding: 24px; }
+h1 { text-align: center; font-size: 1.4rem; margin-bottom: 8px; color: #fff; }
+.subtitle { text-align: center; color: #888; font-size: 0.9rem; margin-bottom: 24px; }
+
+.controls {
+  display: flex; gap: 32px; justify-content: center; align-items: center;
+  margin-bottom: 32px; padding: 16px; background: #141420; border-radius: 12px;
+}
+.slider-group { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.slider-group label { font-size: 0.8rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+.slider-group .value { font-size: 1.1rem; font-weight: 600; min-width: 80px; text-align: center; }
+.slider-group .chakra-label { font-size: 0.85rem; font-weight: 500; transition: color 0.3s; }
+input[type="range"] { width: 200px; accent-color: #666; }
+.audio-toggle { margin-top: 4px; font-size: 0.7rem; color: #666; cursor: pointer; user-select: none; }
+.audio-toggle:hover { color: #aaa; }
+.audio-toggle.active { color: #4f4; }
+
+.options-row { display: flex; gap: 16px; height: calc(100vh - 260px); min-height: 400px; }
+.option-panel {
+  flex: 1; background: #141420; border-radius: 12px; padding: 16px;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.option-panel h3 { font-size: 0.9rem; text-align: center; margin-bottom: 4px; }
+.option-panel .desc { font-size: 0.7rem; color: #888; text-align: center; margin-bottom: 12px; }
+.viz { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; }
+
+/* Option A - Two filling bars */
+.bars-container { display: flex; gap: 24px; height: 100%; align-items: flex-end; width: 100%; justify-content: center; }
+.bar-wrapper { display: flex; flex-direction: column; align-items: center; height: 90%; width: 60px; }
+.bar-label { font-size: 0.65rem; color: #888; margin-bottom: 4px; text-transform: uppercase; }
+.bar-track { width: 40px; flex: 1; background: #1a1a2a; border-radius: 20px; position: relative; overflow: hidden; }
+.bar-fill { position: absolute; width: 100%; border-radius: 20px; transition: all 0.3s ease; }
+.bar-fill.from-bottom { bottom: 0; }
+.bar-fill.from-top { top: 0; }
+
+/* Option B - Two full bars with brightness */
+.bright-container { display: flex; gap: 24px; height: 100%; align-items: center; width: 100%; justify-content: center; }
+.bright-bar-wrapper { display: flex; flex-direction: column; align-items: center; height: 85%; }
+.bright-bar { width: 40px; flex: 1; border-radius: 20px; transition: all 0.3s ease; border: 2px solid rgba(255,255,255,0.1); }
+
+/* Option C - Table + arc */
+.table-arc-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; gap: 8px; }
+.arc { width: 180px; height: 90px; border-radius: 90px 90px 0 0; border: 16px solid; border-bottom: none; transition: all 0.3s ease; }
+.table-rect { width: 140px; height: 80px; border-radius: 8px; transition: all 0.3s ease; }
+.table-label, .arc-label { font-size: 0.6rem; color: #888; text-align: center; }
+
+.chakra-legend {
+  display: flex; justify-content: center; gap: 8px; margin-top: 8px; padding-top: 8px;
+  border-top: 1px solid #222;
+}
+.legend-item { display: flex; align-items: center; gap: 3px; font-size: 0.6rem; color: #888; }
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+</style>
+</head>
+<body>
+
+<h1>Alignment Prototype — UX Options</h1>
+<p class="subtitle">Slide both inputs to see how each visualization responds. Click speaker icons to enable audio.</p>
+
+<div class="controls">
+  <div class="slider-group">
+    <label>Audio (Bass Hz)</label>
+    <input type="range" id="audioSlider" min="20" max="250" value="70">
+    <div class="value" id="audioValue">70 Hz</div>
+    <div class="chakra-label" id="audioChakra">Green — Heart</div>
+    <div class="audio-toggle" id="audioToggle" onclick="toggleAudioTone()">🔇 Click for tone</div>
+  </div>
+  <div class="slider-group">
+    <label>Heart (BPM)</label>
+    <input type="range" id="heartSlider" min="40" max="120" value="75">
+    <div class="value" id="heartValue">75 BPM</div>
+    <div class="chakra-label" id="heartChakra">Green — Heart</div>
+    <div class="audio-toggle" id="heartToggle" onclick="toggleHeartbeat()">🔇 Click for heartbeat</div>
+  </div>
+</div>
+
+<div class="options-row">
+  <!-- Option A -->
+  <div class="option-panel">
+    <h3>Option A — Filling Bars</h3>
+    <p class="desc">Two bars fill from opposite ends, joining when matched</p>
+    <div class="viz">
+      <div class="bars-container">
+        <div class="bar-wrapper">
+          <div class="bar-label">Audio</div>
+          <div class="bar-track">
+            <div class="bar-fill from-bottom" id="barAudio"></div>
+          </div>
+        </div>
+        <div class="bar-wrapper">
+          <div class="bar-label">Heart</div>
+          <div class="bar-track">
+            <div class="bar-fill from-top" id="barHeart"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="option-panel">
+    <h3>Option B — Brightness</h3>
+    <p class="desc">Full bars always show color; glow brighter as inputs converge</p>
+    <div class="viz">
+      <div class="bright-container">
+        <div class="bright-bar-wrapper">
+          <div class="bar-label" style="text-align:center;font-size:0.65rem;color:#888;margin-bottom:4px">Audio</div>
+          <div class="bright-bar" id="brightAudio"></div>
+        </div>
+        <div class="bright-bar-wrapper">
+          <div class="bar-label" style="text-align:center;font-size:0.65rem;color:#888;margin-bottom:4px">Heart</div>
+          <div class="bright-bar" id="brightHeart"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="option-panel">
+    <h3>Option C — Table + Projection</h3>
+    <p class="desc">Table color = audio, ceiling arc = heart</p>
+    <div class="viz">
+      <div class="table-arc-container">
+        <div class="arc-label">↑ Ceiling projection (heart)</div>
+        <div class="arc" id="arcHeart"></div>
+        <div class="table-rect" id="tableAudio"></div>
+        <div class="table-label">Table surface (audio)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="chakra-legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#ff0000"></div>Root</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ff7700"></div>Sacral</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ffdd00"></div>Solar</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#00cc44"></div>Heart</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#0088ff"></div>Throat</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#4400cc"></div>3rd Eye</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#8800ff"></div>Crown</div>
+</div>
+
+<script>
+const CHAKRAS = [
+  { name: 'Root',       color: [255, 0, 0],     hzMin: 20,  hzMax: 35,  bpmMin: 40,  bpmMax: 51 },
+  { name: 'Sacral',     color: [255, 119, 0],   hzMin: 35,  hzMax: 50,  bpmMin: 52,  bpmMax: 63 },
+  { name: 'Solar Plexus', color: [255, 221, 0], hzMin: 50,  hzMax: 70,  bpmMin: 64,  bpmMax: 74 },
+  { name: 'Heart',      color: [0, 204, 68],    hzMin: 70,  hzMax: 100, bpmMin: 75,  bpmMax: 86 },
+  { name: 'Throat',     color: [0, 136, 255],   hzMin: 100, hzMax: 140, bpmMin: 87,  bpmMax: 97 },
+  { name: 'Third Eye',  color: [68, 0, 204],    hzMin: 140, hzMax: 190, bpmMin: 98,  bpmMax: 109 },
+  { name: 'Crown',      color: [136, 0, 255],   hzMin: 190, hzMax: 250, bpmMin: 110, bpmMax: 120 },
+];
+
+const COLOR_NAMES = ['Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Indigo', 'Violet'];
+
+function getChakraIndex(value, type) {
+  for (let i = 0; i < CHAKRAS.length; i++) {
+    const min = type === 'audio' ? CHAKRAS[i].hzMin : CHAKRAS[i].bpmMin;
+    const max = type === 'audio' ? CHAKRAS[i].hzMax : CHAKRAS[i].bpmMax;
+    if (value >= min && value <= max) return i;
+  }
+  return 6;
+}
+
+function colorStr(idx, alpha = 1) {
+  const [r, g, b] = CHAKRAS[idx].color;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+function getCloseness(audioIdx, heartIdx) {
+  const diff = Math.abs(audioIdx - heartIdx);
+  return 1 - (diff / 6);
+}
+
+function getFillPercent(audioIdx, heartIdx) {
+  const diff = Math.abs(audioIdx - heartIdx);
+  if (diff === 0) return 100;
+  return Math.max(15, 100 - (diff * 15));
+}
+
+// --- Audio Engine ---
+let audioCtx = null;
+let toneOsc = null;
+let toneGain = null;
+let toneActive = false;
+let heartbeatActive = false;
+let heartbeatInterval = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+function toggleAudioTone() {
+  const toggle = document.getElementById('audioToggle');
+  if (toneActive) {
+    toneActive = false;
+    if (toneOsc) { toneOsc.stop(); toneOsc = null; }
+    if (toneGain) { toneGain.disconnect(); toneGain = null; }
+    toggle.textContent = '🔇 Click for tone';
+    toggle.classList.remove('active');
+  } else {
+    toneActive = true;
+    const ctx = getAudioCtx();
+    toneGain = ctx.createGain();
+    toneGain.gain.value = 0.3;
+    toneGain.connect(ctx.destination);
+    toneOsc = ctx.createOscillator();
+    toneOsc.type = 'sine';
+    toneOsc.frequency.value = parseInt(document.getElementById('audioSlider').value);
+    toneOsc.connect(toneGain);
+    toneOsc.start();
+    toggle.textContent = '🔊 Tone playing';
+    toggle.classList.add('active');
+  }
+}
+
+function updateToneFrequency(hz) {
+  if (toneActive && toneOsc) {
+    toneOsc.frequency.setTargetAtTime(hz, getAudioCtx().currentTime, 0.02);
+  }
+}
+
+function toggleHeartbeat() {
+  const toggle = document.getElementById('heartToggle');
+  if (heartbeatActive) {
+    heartbeatActive = false;
+    if (heartbeatInterval) { clearInterval(heartbeatInterval); heartbeatInterval = null; }
+    toggle.textContent = '🔇 Click for heartbeat';
+    toggle.classList.remove('active');
+  } else {
+    heartbeatActive = true;
+    toggle.textContent = '🔊 Heartbeat playing';
+    toggle.classList.add('active');
+    startHeartbeat();
+  }
+}
+
+function playHeartbeatPulse() {
+  const ctx = getAudioCtx();
+  const now = ctx.currentTime;
+
+  // First thump (lub)
+  const osc1 = ctx.createOscillator();
+  const gain1 = ctx.createGain();
+  osc1.type = 'sine';
+  osc1.frequency.value = 60;
+  gain1.gain.setValueAtTime(0, now);
+  gain1.gain.linearRampToValueAtTime(0.5, now + 0.02);
+  gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.12);
+  osc1.connect(gain1);
+  gain1.connect(ctx.destination);
+  osc1.start(now);
+  osc1.stop(now + 0.15);
+
+  // Second thump (dub) — slightly delayed, lower
+  const osc2 = ctx.createOscillator();
+  const gain2 = ctx.createGain();
+  osc2.type = 'sine';
+  osc2.frequency.value = 40;
+  gain2.gain.setValueAtTime(0, now + 0.1);
+  gain2.gain.linearRampToValueAtTime(0.35, now + 0.12);
+  gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+  osc2.connect(gain2);
+  gain2.connect(ctx.destination);
+  osc2.start(now + 0.1);
+  osc2.stop(now + 0.3);
+}
+
+function startHeartbeat() {
+  if (heartbeatInterval) clearInterval(heartbeatInterval);
+  const bpm = parseInt(document.getElementById('heartSlider').value);
+  const intervalMs = (60 / bpm) * 1000;
+  playHeartbeatPulse();
+  heartbeatInterval = setInterval(() => {
+    if (heartbeatActive) playHeartbeatPulse();
+  }, intervalMs);
+}
+
+function updateHeartbeatRate() {
+  if (heartbeatActive) startHeartbeat();
+}
+
+// --- Visual Update ---
+const audioSlider = document.getElementById('audioSlider');
+const heartSlider = document.getElementById('heartSlider');
+const audioValue = document.getElementById('audioValue');
+const heartValue = document.getElementById('heartValue');
+const audioChakra = document.getElementById('audioChakra');
+const heartChakra = document.getElementById('heartChakra');
+
+function update() {
+  const hz = parseInt(audioSlider.value);
+  const bpm = parseInt(heartSlider.value);
+  audioValue.textContent = hz + ' Hz';
+  heartValue.textContent = bpm + ' BPM';
+
+  const audioIdx = getChakraIndex(hz, 'audio');
+  const heartIdx = getChakraIndex(bpm, 'heart');
+  const closeness = getCloseness(audioIdx, heartIdx);
+
+  // Chakra labels
+  audioChakra.textContent = COLOR_NAMES[audioIdx] + ' — ' + CHAKRAS[audioIdx].name;
+  audioChakra.style.color = colorStr(audioIdx);
+  heartChakra.textContent = COLOR_NAMES[heartIdx] + ' — ' + CHAKRAS[heartIdx].name;
+  heartChakra.style.color = colorStr(heartIdx);
+
+  // Option A - Filling bars
+  const fillPct = getFillPercent(audioIdx, heartIdx);
+  const barAudio = document.getElementById('barAudio');
+  const barHeart = document.getElementById('barHeart');
+  barAudio.style.height = fillPct + '%';
+  barAudio.style.background = colorStr(audioIdx);
+  barAudio.style.boxShadow = fillPct === 100 ? `0 0 20px ${colorStr(audioIdx, 0.8)}` : 'none';
+  barHeart.style.height = fillPct + '%';
+  barHeart.style.background = colorStr(heartIdx);
+  barHeart.style.boxShadow = fillPct === 100 ? `0 0 20px ${colorStr(heartIdx, 0.8)}` : 'none';
+
+  // Option B - Brightness (always show color, brightness varies)
+  const baseAlpha = 0.4;
+  const maxAlpha = 1.0;
+  const alpha = baseAlpha + (closeness * (maxAlpha - baseAlpha));
+  const glowSize = Math.round(closeness * closeness * 40);
+  const brightAudio = document.getElementById('brightAudio');
+  const brightHeart = document.getElementById('brightHeart');
+  brightAudio.style.background = colorStr(audioIdx, alpha);
+  brightHeart.style.background = colorStr(heartIdx, alpha);
+  if (closeness > 0.5) {
+    brightAudio.style.boxShadow = `0 0 ${glowSize}px ${colorStr(audioIdx, closeness * 0.7)}, inset 0 0 ${glowSize/2}px ${colorStr(audioIdx, closeness * 0.3)}`;
+    brightHeart.style.boxShadow = `0 0 ${glowSize}px ${colorStr(heartIdx, closeness * 0.7)}, inset 0 0 ${glowSize/2}px ${colorStr(heartIdx, closeness * 0.3)}`;
+  } else {
+    brightAudio.style.boxShadow = 'none';
+    brightHeart.style.boxShadow = 'none';
+  }
+
+  // Option C - Table + Arc
+  const tableAudio = document.getElementById('tableAudio');
+  const arcHeart = document.getElementById('arcHeart');
+  tableAudio.style.background = colorStr(audioIdx, 0.9);
+  tableAudio.style.boxShadow = `0 0 20px ${colorStr(audioIdx, 0.4)}`;
+  arcHeart.style.borderColor = colorStr(heartIdx, 0.9);
+  arcHeart.style.boxShadow = `0 0 15px ${colorStr(heartIdx, 0.4)}, inset 0 0 15px ${colorStr(heartIdx, 0.2)}`;
+
+  // Audio updates
+  updateToneFrequency(hz);
+}
+
+audioSlider.addEventListener('input', update);
+heartSlider.addEventListener('input', () => { update(); updateHeartbeatRate(); });
+update();
+</script>
+</body>
+</html>
