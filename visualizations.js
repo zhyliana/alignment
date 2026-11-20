@@ -48,3 +48,22 @@ function updateOptionC(audioIdx, heartIdx) {
   arcHeart.style.borderColor = chakraColor(heartIdx, 0.9);
   arcHeart.style.boxShadow = `0 0 15px ${chakraColor(heartIdx, 0.4)}, inset 0 0 15px ${chakraColor(heartIdx, 0.2)}`;
 }
+
+const FLASH_IDS = ["barAudio", "barHeart", "brightAudio", "brightHeart", "tableAudio", "arcHeart"];
+const FLASH_DIM = "brightness(0.55)";
+const FLASH_BRIGHT = "brightness(1.5)";
+
+// Brighten every visualization once per beat, with the same soft rise and
+// long fade as the heartbeat sound.
+function flashVisuals(beatSeconds) {
+  FLASH_IDS.forEach((id) => {
+    document.getElementById(id).animate(
+      [
+        { filter: FLASH_DIM, easing: "ease-out" },
+        { filter: FLASH_BRIGHT, offset: BEAT_RISE, easing: "ease-out" },
+        { filter: FLASH_DIM },
+      ],
+      { duration: beatSeconds * 1000, fill: "forwards" }
+    );
+  });
+}

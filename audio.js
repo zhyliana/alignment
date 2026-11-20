@@ -3,7 +3,6 @@ let toneOsc = null;
 let toneGain = null;
 let toneActive = false;
 let heartbeatActive = false;
-let heartbeatTimer = null;
 let heartOsc = null;
 let heartGain = null;
 
@@ -49,6 +48,8 @@ function updateToneFrequency(hz) {
 // beat, a soft rise followed by a long fade, so there is no hard on/off edge.
 const HEART_PEAK = 0.35;
 const HEART_FLOOR = 0.03;
+// Fraction of a beat spent rising to the peak, shared with the visual flash.
+const BEAT_RISE = 0.2;
 
 function toggleHeartbeat() {
   const toggle = document.getElementById("heartToggle");
@@ -75,26 +76,20 @@ function startHeartbeat() {
   heartOsc.frequency.value = parseInt(document.getElementById("audioSlider").value);
   heartOsc.connect(heartGain);
   heartOsc.start();
-  scheduleHeartbeatPulse();
+  restartBeat();
 }
 
-// Swell for one beat, then queue the next. The BPM is read fresh every beat,
-// so tempo changes land on the next beat without retriggering the swell.
-function scheduleHeartbeatPulse() {
+// Swell for one beat. Called by the beat clock in beat.js on every beat.
+function pulseHeartbeatAudio(beatSeconds) {
   if (!heartbeatActive || !heartGain) return;
-  const bpm = parseInt(document.getElementById("heartSlider").value);
-  const beatSeconds = 60 / bpm;
   const now = getAudioCtx().currentTime;
-  const rise = beatSeconds * 0.2;
+  const rise = beatSeconds * BEAT_RISE;
 
   heartGain.gain.setTargetAtTime(HEART_PEAK, now, rise / 3);
   heartGain.gain.setTargetAtTime(HEART_FLOOR, now + rise, beatSeconds * 0.2);
-
-  heartbeatTimer = setTimeout(scheduleHeartbeatPulse, beatSeconds * 1000);
 }
 
 function stopHeartbeat() {
-  if (heartbeatTimer) { clearTimeout(heartbeatTimer); heartbeatTimer = null; }
   if (!heartOsc) return;
   const ctx = getAudioCtx();
   const osc = heartOsc;

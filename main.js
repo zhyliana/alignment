@@ -48,3 +48,4 @@ heartSlider.addEventListener("input", update);
 
 buildLegend();
 update();
+restartBeat();
