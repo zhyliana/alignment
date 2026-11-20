@@ -44,7 +44,7 @@ function buildLegend() {
 document.getElementById("audioToggle").addEventListener("click", toggleAudioTone);
 document.getElementById("heartToggle").addEventListener("click", toggleHeartbeat);
 audioSlider.addEventListener("input", update);
-heartSlider.addEventListener("input", () => { update(); updateHeartbeatRate(); });
+heartSlider.addEventListener("input", update);
 
 buildLegend();
 update();
